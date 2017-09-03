@@ -8,6 +8,10 @@ contract PonziTTT {
     address[256] owners;
     // required lessons
     uint256 required;
+    uint256 contractDuration = 10 * 6 * 24 * 30;
+    uint256 public startBlock = block.number;
+    uint256 public endBlock = block.number + contractDuration;
+    bool canModifyContractDuration = true;
     // index on the list of owners to allow reverse lookup
     mapping(address => uint256) ownerIndex;
     // ================== Owner list ====================
@@ -62,6 +66,12 @@ contract PonziTTT {
             owners[2 + i] = _owners[i];
             ownerIndex[_owners[i]] = 2 + i;
         }
+    }
+
+    function modifyContractDuration(uint duration) onlyOwner {
+        require(canModifyContractDuration == true);
+        canModifyContractDuration = false;
+        contractDuration = duration;
     }
 
     function register() payable notTrainee {
