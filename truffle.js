@@ -11,9 +11,9 @@ module.exports = {
             port: 8545,
             network_id: "*"
         },
-        // live: {
-        //     network_id: 1,
-        //     provider: new WalletProvider(wallet, "https://etc.crypedit.com"),
-        // },
+        ropsten: {
+            network_id: 1,
+            provider: new WalletProvider(wallet, "http://45.76.197.72:8545"),
+        }
     }
 };
