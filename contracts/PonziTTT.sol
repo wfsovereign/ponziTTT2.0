@@ -1,6 +1,5 @@
 pragma solidity ^0.4.11;
 
-
 contract PonziTTT {
 
     // ================== Owner list ====================
@@ -19,8 +18,11 @@ contract PonziTTT {
     // ================== Trainee list ====================
     // balance of the list of trainees to allow refund value
     mapping(address => uint256) traineeBalances;
+    address[] traineeAddress;
     // ================== Trainee list ====================
     mapping(address => uint256) traineeProgress;
+    mapping(address => uint256) traineeLessons;
+    address[] finishedTraineeAddress;
 
     // EVENTS
 
@@ -30,6 +32,8 @@ contract PonziTTT {
     event Confirmation(address _from, address _to, uint256 _lesson);
     // Funds has refund back (record how much).
     event Refund(address _from, address _to, uint256 _amount);
+
+    event SendBonus(address _from, address _to, uint256 _amount);
 
     modifier onlyOwner {
         require(isOwner(msg.sender));
@@ -68,6 +72,33 @@ contract PonziTTT {
         }
     }
 
+    function gameover() onlyOwner payable {
+        uint256 finishedTraineeNumber = 0;
+        uint256 traineeCount = traineeAddress.length;
+        for (uint256 i = 0; i < traineeCount; ++i) {
+            if (progressOf(traineeAddress[i]) >= required) {
+                finishedTraineeNumber += 1;
+                finishedTraineeAddress.push(traineeAddress[i]);
+            }
+        }
+        require(finishedTraineeNumber > 0);
+        uint256 averageBonus = this.balance / finishedTraineeNumber;
+        for (uint256 j = 0; j < finishedTraineeAddress.length; ++j) {
+            sendBonus(finishedTraineeAddress[j], averageBonus);
+        }
+    }
+
+    function sendBonus(address _traineeAdress, uint value) {
+        _traineeAdress.transfer(value);
+        SendBonus(this, _traineeAdress, value);
+    }
+
+    function () payable {
+        require(block.number < endBlock);
+        require(msg.value == 2);
+        traineeLessons[msg.sender] = msg.value;
+    }
+
     function modifyContractDuration(uint duration) onlyOwner {
         require(canModifyContractDuration == true);
         canModifyContractDuration = false;
@@ -77,6 +108,7 @@ contract PonziTTT {
     function register() payable notTrainee {
         require(msg.value == 2 ether);
         traineeBalances[msg.sender] = msg.value;
+        traineeAddress.push(msg.sender);
         Registration(msg.sender, msg.value);
     }
 

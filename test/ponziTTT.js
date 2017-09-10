@@ -196,4 +196,73 @@ contract('PonziTTT', function (accounts) {
             assert.equal(res.valueOf(), true, "");
         });
     });
+
+    it('should can call gameover as trainer then send bonous to finished trainee', function () {
+        var ponzi;
+        var before, after;
+
+        var trainer = accounts[0];
+        var trainee_two = accounts[1];
+        var trainee = accounts[2];
+
+        return PonziTTT.new([trainer], 4).then(function (instance) {
+            ponzi = instance;
+            ponzi.register({from: trainee_two, value: web3.toWei(2, 'ether')});
+            return ponzi.register({ from: trainee, value: web3.toWei(2, 'ether') });
+        }).then(function () {
+            return ponzi.isOwner(trainer);
+        }).then(function (res) {
+            assert.equal(res.valueOf(), true, "");
+        }).then(function () {
+            before = web3.eth.getBalance(trainee);
+            return ponzi.isTrainee(trainee);
+        }).then(function (res) {
+            assert.equal(res.valueOf(), true, "");
+        }).then(function () {
+            return ponzi.balanceOf(trainee);
+        }).then(function (res) {
+            assert.equal(res.valueOf(), web3.toWei(2, 'ether'), "");
+        }).then(function () {
+            return ponzi.checkProgress({ from: trainee });
+        }).then(function (res) {
+            assert.equal(res.valueOf(), 0, "");
+        }).then(function () {
+            return ponzi.confirmOnce(trainee, { from: trainer });
+        }).then(function () {
+            return ponzi.confirmOnce(trainee, { from: trainer });
+        }).then(function () {
+            return ponzi.confirmOnce(trainee, { from: trainer });
+        }).then(function () {
+            return ponzi.checkProgress({ from: trainee });
+        }).then(function (res) {
+            assert.equal(res.valueOf(), 3, "");
+        }).then(function () {
+            return ponzi.isFinished(trainee);
+        }).then(function (res) {
+            assert.equal(res.valueOf(), false, "");
+        }).then(function () {
+            return ponzi.confirmOnce(trainee, { from: trainer });
+        }).then(function () {
+            return ponzi.checkProgress({ from: trainee });
+        }).then(function (res) {
+            assert.equal(res.valueOf(), 4, "");
+        }).then(function () {
+            return ponzi.isFinished(trainee);
+        }).then(function (res) {
+            assert.equal(res.valueOf(), true, "");
+        }).then(function () {
+            return ponzi.gameover({ from: trainer });
+        }).then(function () {
+            after = web3.eth.getBalance(trainee);
+            return ponzi.balanceOf(trainee);
+        }).then(function (res) {
+            assert.equal(res.valueOf(), 0, "");
+        }).then(function (res) {
+            assert.equal(before.plus(web3.toWei(4, 'ether')).valueOf(), after.valueOf(), "");
+        }).then(function () {
+            return ponzi.checkContractBalance();
+        }).then(function (res) {
+            assert.equal(res.valueOf(), 0, "");
+        });
+    });
 });
